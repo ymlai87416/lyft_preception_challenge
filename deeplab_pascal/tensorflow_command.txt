@@ -1,0 +1,23 @@
+python3 keras_to_tensorflow.py -input_model_file ./model/deeplab_15_trim_xception_a.h5
+
+# graph optimization
+
+~/tensorflow/bazel-bin/tensorflow/python/tools/freeze_graph \
+--input_graph=saved_model.pb \
+--input_checkpoint=./variable/variables \
+--input_binary=true \
+--output_graph=frozen_graph.pb \
+--output_node_names=steering
+
+~/tensorflow/bazel-bin/tensorflow/python/tools/optimize_for_inference \
+--input=./model/deeplab_15_trim_xception_a.h5.pb \
+--output=./model/deeplab_15_trim_xception_a.opt.h5.pb \
+--frozen_graph=True \
+--input_names=input_1 \
+--output_names=output_node0
+
+~/tensorboard/bazel-bin/tensorboard/tensorboard --logdir ./log/base_log
+
+python main_deeplab3.py test ./model/deeplab_15_trim_xception_a.opt.h5.pb
+
+ffmpeg -r 10 -start_number 28  -i video/%06d.png -vcodec mpeg4 -b 2000k -y video.mp4
